@@ -51,8 +51,10 @@ public class CompanyServiceImpl implements CompanyService {
         return companyDTO;
     }
 
+    //Retrieves a list of all company profiles.
     @Override
     public List<CompanyDTO> getAllCompanyProfiles() throws JobPortalException {
+        // Retrieve all companies from the repository, convert each entity to a DTO, and return the list
         return companyRepository.findAll().stream().map((x) -> x.toDTO()).toList();
     }
 
