@@ -19,9 +19,12 @@ public class CompanyServiceImpl implements CompanyService {
     @Autowired
     private CompanyRepository companyRepository;
 
+    //Creates a new company profile based on the provided user details.
     @Override
     public Long createCompanyProfile(UserDTO userDTO) throws JobPortalException {
         Company company = new Company();
+
+        // Set the company's ID (using a utility function to get the next sequence ID)
         company.setId(Utilities.getNextSequenceId("companies"));
         company.setEmail(userDTO.getEmail());
         company.setName(userDTO.getName());
@@ -32,14 +35,18 @@ public class CompanyServiceImpl implements CompanyService {
         return company.getId();
     }
 
+    //Retrieves the company profile by its ID.
     @Override
     public CompanyDTO getCompanyProfile(Long id) throws JobPortalException {
         return companyRepository.findById(id).orElseThrow(() -> new JobPortalException("COMPANY_NOT_FOUND")).toDTO();
     }
 
+    //Updates an existing company profile.
     @Override
     public CompanyDTO updateCompanyProfile(CompanyDTO companyDTO) throws JobPortalException {
         companyRepository.findById(companyDTO.getId()).orElseThrow(() -> new JobPortalException("COMPANY_NOT_FOUND"));
+        
+        // Save the updated company entity to the repository
         companyRepository.save(companyDTO.toEntity());
         return companyDTO;
     }

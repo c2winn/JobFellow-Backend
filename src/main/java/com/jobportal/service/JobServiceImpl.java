@@ -68,62 +68,83 @@ public class JobServiceImpl implements JobService {
 		return jobRepository.save(jobDTO.toEntity()).toDTO();
 	}
 
+	//Retrieves all active jobs.
 	@Override
 	public List<JobDTO> getAllJobs() throws JobPortalException {
 		return jobRepository.findAll().stream().map((x) -> x.toDTO()).toList();
 	}
 
+	//Retrieves the details of a specific job by its ID.
 	@Override
 	public JobDTO getJob(Long id) throws JobPortalException {
 		return jobRepository.findById(id).orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND")).toDTO();
 	}
 
+	//Allows a user to apply for a job.
 	@Override
 	public void applyJob(Long id, ApplicantDTO applicantDTO) throws JobPortalException {
 		User user = userRepository.findByEmail(applicantDTO.getEmail())
 				.orElseThrow(() -> new JobPortalException("USER_NOT_FOUND"));
-		if (!user.isVerified())
+		
+		
+			// Check if the user is verified
+			if (!user.isVerified())
 			throw new JobPortalException("USER_NOT_VERIFIED");
 
 
+		// Retrieve the job being applied for
 		Job job = jobRepository.findById(id).orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND"));
 		List<Applicant> applicants = job.getApplicants();
+		
+		// Get the list of applicants for the job
 		if (applicants == null)
 			applicants = new ArrayList<>();
-		if (applicants.stream().filter((x) -> x.getApplicantId() == applicantDTO.getApplicantId()).toList().size() > 0)
+		
+			// Check if the applicant has already applied for the job
+			if (applicants.stream().filter((x) -> x.getApplicantId() == applicantDTO.getApplicantId()).toList().size() > 0)
 			throw new JobPortalException("JOB_APPLIED_ALREADY");
-		applicantDTO.setApplicationStatus(ApplicationStatus.APPLIED);
-		applicantDTO.setTimestamp(LocalDateTime.now());
-		applicants.add(applicantDTO.toEntity());
-		job.setApplicants(applicants);
-		jobRepository.save(job);
+		
+			applicantDTO.setApplicationStatus(ApplicationStatus.APPLIED);
+			applicantDTO.setTimestamp(LocalDateTime.now());
+			applicants.add(applicantDTO.toEntity());
+			job.setApplicants(applicants);
+			jobRepository.save(job);
 	}
 
+	//Retrieves the application history of a specific applicant for a specific status.
 	@Override
 	public List<JobDTO> getHistory(Long id, ApplicationStatus applicationStatus) {
 		return jobRepository.findByApplicantIdAndApplicationStatus(id, applicationStatus).stream().map((x) -> x.toDTO())
 				.toList();
 	}
 
+	//Retrieves all jobs posted by a specific user.
 	@Override
 	public List<JobDTO> getJobsPostedBy(Long id) throws JobPortalException {
 		return jobRepository.findByPostedBy(id).stream().map((x) -> x.toDTO()).toList();
 	}
 
+	//Changes the application status for an applicant.
 	@Override
 	public void changeAppStatus(Application application) throws JobPortalException {
 		
+		// Retrieve the job for which the application status is being changed
 		Job job = jobRepository.findById(application.getId())
 				.orElseThrow(() -> new JobPortalException("JOB_NOT_FOUND"));
-		List<Applicant> apps = job.getApplicants().stream().map((x) -> {
+		
+			List<Applicant> apps = job.getApplicants().stream().map((x) -> {
+	
 			if (application.getApplicantId() == x.getApplicantId()) {
 				x.setApplicationStatus(application.getApplicationStatus());
+				
+				// If the status is "INTERVIEWING", schedule interview time and notify the applicant
 				if (application.getApplicationStatus().equals(ApplicationStatus.INTERVIEWING)) {
 					x.setInterviewTime(application.getInterviewTime());
 					NotificationDTO notiDto = new NotificationDTO();
 					notiDto.setAction("Interview Scheduled");
 					notiDto.setMessage("Interview scheduled for job : " + job.getJobTitle());
 					
+					 // Send a notification to the applicant
 					User user;
 					try {
 						user = userRepository.findByProfileIdAndAccountType(application.getApplicantId(), AccountType.APPLICANT)
@@ -146,6 +167,7 @@ public class JobServiceImpl implements JobService {
 
 	}
 
+	//Retrieves paginated jobs that are "ACTIVE".
 	@Override
 	public Page<JobDTO> getPaginatedJobs(PageRequest pageable) {
 		return jobRepository.findByJobStatus("ACTIVE", pageable);
