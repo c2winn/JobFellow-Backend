@@ -19,6 +19,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * JwtAuthenticationFilter is a custom filter that intercepts requests and validates JWT tokens.
+ * It ensures that each request contains a valid JWT and sets authentication in the security context.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -29,6 +33,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
+     /**
+     * This method intercepts requests to check for a valid JWT token.
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
@@ -39,16 +46,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //        }
         //Authorization
 
+        // Retrieve the Authorization header from the request
         String requestHeader = request.getHeader("Authorization");
         //Bearer 2352345235sdfrsfgsdfsdf
         // logger.info(" Header :  {}", requestHeader);
         String username = null;
         String token = null;
+
+        // Check if the Authorization header contains a valid Bearer token
         if (requestHeader != null && requestHeader.startsWith("Bearer")) {
-            //looking good
+            
+            // Extract the JWT token from the header (excluding "Bearer " prefix)
             token = requestHeader.substring(7);
             try {
-
+                // Extract the username from the JWT token
                 username = this.jwtHelper.getUsernameFromToken(token);
 
             } catch (IllegalArgumentException e) {
@@ -71,7 +82,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
 
-        //
+        // If a valid username was extracted and the user is not already authenticated
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
 

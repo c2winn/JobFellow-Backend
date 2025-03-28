@@ -15,9 +15,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CustomUserDetails implements UserDetails {
-	/**
-	 * 
-	 */
+	
+	// Ensures compatibility during serialization
 	private static final long serialVersionUID = 1L;
 	private Long id;
 	private String username;
@@ -25,6 +24,11 @@ public class CustomUserDetails implements UserDetails {
 	private String password;
 	private Long profileId;
 	private AccountType accountType;
+
+	/**
+     * Authorities represent the roles or permissions assigned to the user.
+     * These are required by Spring Security for authorization.
+     */
 	private Collection<?extends GrantedAuthority>authorities;
 
 }
